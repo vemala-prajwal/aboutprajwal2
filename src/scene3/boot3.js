@@ -43,6 +43,12 @@ export async function initChrono() {
   }
 
   // ---- cards -------------------------------------------------------------
+  // Shared timestamp: set whenever a swipe gesture claims an event, so that
+  // subsequent handlers (card click, section pointerup) can tell the event
+  // was already handled and must not fire setTarget() a second time.
+  // Must be function-scoped — the card closures and the section handler all share it.
+  let lastSwipedAt = 0;
+
   const cards = YEARS.map((y, i) => {
     const el = document.createElement('button');
     el.type = 'button';
@@ -68,7 +74,6 @@ export async function initChrono() {
       + `</span>`;
 
     // Track touch swipes so swiping between cards doesn't trigger open-link
-    let lastSwipedAt = 0;
     el.addEventListener('click', (e) => {
       if (performance.now() - lastSwipedAt < 350) {
         e.preventDefault();
@@ -197,17 +202,44 @@ export async function initChrono() {
 
   section.addEventListener('pointerleave', () => { chrono.pointer.inside = false; });
 
-  let swipeY = null;
+  // Section-level swipe: navigate between projects on mobile.
+  // IMPORTANT: this must NOT fire during normal page scroll.
+  // The previous implementation only gated on |dy| > 36, which is trivially
+  // exceeded by a regular downward page-scroll — the root cause of the
+  // "randomly switching active card while scrolling" bug.
+  // Fix: track both axes and only count it as a card-swipe when the gesture
+  // is predominantly HORIZONTAL (dx > dy * 1.5) AND the pointer did not move
+  // far enough vertically to be a page scroll (|dy| < 60 px).
+  // Also bail if the deck's own touchend handler already claimed the event
+  // (lastSwipedAt guard reused from the deck handler above).
+  let swipeStart = null;
   section.addEventListener('pointerdown', (e) => {
     if (!coarseMQ.matches) return;
-    swipeY = e.clientY;
+    // Only track single-finger gestures; ignore mouse
+    if (e.pointerType !== 'touch') return;
+    swipeStart = { x: e.clientX, y: e.clientY };
+  }, { passive: true });
+  section.addEventListener('pointermove', (e) => {
+    if (!coarseMQ.matches || !swipeStart) return;
+    // If the user has clearly moved vertically (page scroll), cancel tracking
+    // so the subsequent pointerup cannot misfire as a card change.
+    if (Math.abs(e.clientY - swipeStart.y) > 22) swipeStart = null;
   }, { passive: true });
   section.addEventListener('pointerup', (e) => {
-    if (!coarseMQ.matches || swipeY == null) return;
-    const dy = e.clientY - swipeY;
-    swipeY = null;
-    if (Math.abs(dy) < 36) return;
-    setTarget(chrono.active + (dy > 0 ? -1 : 1));
+    if (!coarseMQ.matches || !swipeStart) return;
+    if (e.pointerType !== 'touch') { swipeStart = null; return; }
+    // If the deck's touchend already handled this swipe, skip
+    if (performance.now() - lastSwipedAt < 350) { swipeStart = null; return; }
+    const dx = e.clientX - swipeStart.x;
+    const dy = e.clientY - swipeStart.y;
+    swipeStart = null;
+    // Only count as a horizontal card-swipe: dx must dominate dy clearly,
+    // and vertical displacement must be small (not a scroll gesture)
+    if (Math.abs(dx) < 38) return;
+    if (Math.abs(dy) >= 28) return;           // too vertical — likely a scroll
+    if (Math.abs(dx) <= Math.abs(dy) * 1.5) return; // not horizontal enough
+    lastSwipedAt = performance.now();
+    setTarget(chrono.active + (dx < 0 ? 1 : -1));
   }, { passive: true });
 
   // touch and keyboard: a card is a real button, so both come almost free
@@ -220,11 +252,22 @@ export async function initChrono() {
   let lastActive = -1;
   const frame = (now) => {
     if (!state.running) return;
+    // Mobile (coarse-pointer) throttle: cap render rate to ~30 fps.
+    // IMPORTANT: always update state.last even when skipping a render.
+    // Without this, the next rendered frame sees dt = all-skipped-frames
+    // combined (e.g. 66–99 ms), which causes the damp() spring to
+    // instantly teleport to its target instead of easing — the root cause
+    // of the "snapping/flickering between states" bug on mobile.
     if (coarseMQ.matches && now - state.last < 33) {
+      state.last = now;                      // ← keep dt bounded for next frame
       state.raf = requestAnimationFrame(frame);
       return;
     }
-    const dt = Math.min(0.05, (now - state.last) / 1000 || 0.016);
+    // Tighter dt cap on mobile: 33 ms max (one skipped 30fps frame) instead
+    // of 50 ms, so a stalled tab or cold-start never hands the spring a wild
+    // initial dt that overshoots.
+    const maxDt = coarseMQ.matches ? 0.033 : 0.05;
+    const dt = Math.min(maxDt, (now - state.last) / 1000 || 0.016);
     state.last = now;
     const t = reduced ? T3.live + 2 : (now - state.started) / 1000;
     const s = chrono.render(t, dt);
