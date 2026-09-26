@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en" class="is-booting">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PRAJWAL — Artist · Creative · Storyteller</title>
+<meta name="description" content="Welcome to my world. Portfolio of Prajwal — artist, creative, storyteller.">
+<meta name="theme-color" content="#000000">
+
+<link rel="preload" href="public/fonts/anton-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="public/fonts/oswald-500.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="public/fonts/oswald-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="me-edited-2.png" as="image" fetchpriority="high">
+<link rel="stylesheet" href="src/styles/app.css">
+<link rel="stylesheet" href="src/styles/chrono.css">
+<link rel="stylesheet" href="src/styles/contact.css">
+</head>
+<body>
+
+<!-- the real heading, for search engines and screen readers; the visible
+     wordmark is drawn on the canvas so video can be clipped inside its letters -->
+<h1 class="sr-only">PRAJWAL — Artist, Creative, Storyteller. Welcome to my world.</h1>
+
+<div class="stage-wrap" id="top">
+  <canvas id="stage" aria-hidden="true"></canvas>
+  <img class="hero-image" src="me-edited-2.png" alt="" aria-hidden="true" draggable="false" fetchpriority="high" decoding="async">
+
+  <!-- ------------------------------------------------------------------ -->
+  <header class="hdr" id="hdr">
+    <svg class="hdr__rule" id="hdrRule" aria-hidden="true" preserveAspectRatio="none">
+      <polyline id="hdrRulePath" fill="none" stroke="currentColor" stroke-width="1.25"
+                vector-effect="non-scaling-stroke"/>
+    </svg>
+
+    <a class="hdr__mark" href="#top" aria-label="Prajwal, home">
+      <span class="mark-word">PRAJWAL</span>
+    </a>
+
+    <span class="hdr__div" aria-hidden="true"></span>
+
+    <p class="hdr__roles">
+      <span>Designing UI/UX</span>
+    </p>
+
+    <nav class="hdr__nav" aria-label="Primary">
+      <ul>
+        <li><a href="#top" class="is-active" data-nav>Home</a></li>
+        <li><a href="#chrono" data-nav>About</a></li>
+        <li><a href="#contact" data-nav>Contact</a></li>
+      </ul>
+    </nav>
+
+    <div class="hdr__meta">
+      <span class="hdr__metaLabel">Portfolio — MMXXVI</span>
+      <span class="hdr__pips" aria-hidden="true"><i></i><i></i><i></i></span>
+    </div>
+
+    <button class="hdr__burger" id="burger" aria-expanded="false" aria-controls="hdrNavMobile">
+      <span aria-hidden="true"></span><span aria-hidden="true"></span>
+      <span class="sr-only">Menu</span>
+    </button>
+  </header>
+
+  <!-- ------------------------------------------------------------------ -->
+  <div class="furniture" aria-hidden="true">
+    <p class="welcome" id="welcome">
+      <b class="welcome__dots">•••</b>
+      <span class="welcome__text">Welcome to my world</span>
+      <b class="welcome__dots">•••</b>
+    </p>
+
+    <div class="arrows arrows--l" id="arrowsL"></div>
+    <div class="arrows arrows--r" id="arrowsR"></div>
+    <!-- only the bottom-right grid remains: the top-left one sat under the
+         navigation and fought with it -->
+    <div class="grid-dots grid-dots--br" id="dotsBR"></div>
+  </div>
+
+  <!-- ------------------------------------------------------------------ -->
+  <nav class="menu" id="menu" aria-label="Primary, expanded" hidden>
+    <ul>
+      <li><a href="#top" class="is-active" data-nav>Home</a></li>
+      <li><a href="#chrono" data-nav>About</a></li>
+      <li><a href="#contact" data-nav>Contact</a></li>
+    </ul>
+    <p class="menu__tag">••• Welcome to my world •••</p>
+  </nav>
+
+  <!-- ------------------------------------------------------------------ -->
+  <div class="boot" id="boot">
+    <div class="boot__bar"><i id="bootFill"></i></div>
+    <button class="boot__enter" id="bootEnter" hidden>
+      <span>Enter</span>
+    </button>
+  </div>
+
+  <noscript>
+    <div class="fallback">
+      <p>PRAJWAL</p>
+      <small>This opening is an animated experience. Please enable JavaScript.</small>
+    </div>
+  </noscript>
+</div>
+
+<main class="flow">
+  <!-- the hero above is position:fixed, so this reserves its scroll height -->
+  <div class="hero-spacer" aria-hidden="true"></div>
+
+  <!-- ==================================================================== -->
+  <section class="chrono" id="chrono" aria-labelledby="chronoTitle">
+    <div class="chrono__pin">
+      <canvas id="chronoStage" aria-hidden="true"></canvas>
+
+      <h2 class="chrono__title" id="chronoTitle">
+        <span>A</span><span>Showcase</span><span>Of</span><span>Work</span>
+      </h2>
+      <p class="chrono__rail" aria-hidden="true">
+        <i></i>
+        <span>Web Apps</span><span>Tools</span><span>Design</span>
+        <span>Projects</span><span>Code</span>
+        <i></i>
+      </p>
+
+      <p class="chrono__hint" aria-hidden="true">
+        Move<br>to explore<br>the work<i></i>
+      </p>
+      <p class="chrono__note chrono__note--bl" aria-hidden="true">
+        Same<br>curiosity<br>built<br>differently
+      </p>
+      <p class="chrono__note chrono__note--br" aria-hidden="true">
+        Still<br>building<br>what's<br>next<i></i>
+      </p>
+
+      <div class="chrono__deck" id="chronoDeck"></div>
+
+      <!-- the figure's own layer, stacked over the deck: he stands in front
+           of the timeline, looking at his journey -->
+      <canvas id="chronoFront" aria-hidden="true"></canvas>
+    </div>
+  </section>
+
+
+
+  <section class="contact-page contact-inline" id="contact" aria-labelledby="contactTitle">
+    <div class="contact-page__main">
+      <div class="contact-panel">
+        <div class="contact-panel__intro">
+          <p class="contact-panel__eyebrow">Open for ideas</p>
+          <h2 id="contactTitle">Let&rsquo;s make<br><em>something real.</em></h2>
+          <p class="contact-panel__copy">Designing high-impact UI/UX interfaces, modern web apps, and custom freelance builds. Pick a direct channel below and let&rsquo;s create something exceptional.</p>
+        </div>
+
+        <div class="contact-info" aria-label="Contact details">
+          <a class="contact-info__item" href="tel:+919380753581">
+            <span class="contact-info__label">Phone / WhatsApp</span>
+            <strong>+91 93807 53581</strong>
+            <span class="contact-info__arrow" aria-hidden="true">↗</span>
+          </a>
+          <a class="contact-info__item" href="https://instagram.com/nameisprajwal" target="_blank" rel="noreferrer">
+            <span class="contact-info__label">Instagram</span>
+            <strong>@nameisprajwal</strong>
+            <span class="contact-info__arrow" aria-hidden="true">↗</span>
+          </a>
+          <a class="contact-info__item" href="mailto:vemalaprajwal8200@gmail.com">
+            <span class="contact-info__label">Email</span>
+            <strong>vemalaprajwal8200@gmail.com</strong>
+            <span class="contact-info__arrow" aria-hidden="true">↗</span>
+          </a>
+          <div class="contact-info__item">
+            <span class="contact-info__label">Discord</span>
+            <strong>prajwal_48686</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer class="contact-page__footer">
+      <span>&copy; 2026 Prajwal &mdash; All rights reserved</span>
+      <a href="#top" data-nav>Back to top <span aria-hidden="true">&uarr;</span></a>
+    </footer>
+  </section>
+
+</main>
+
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
