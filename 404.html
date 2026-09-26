@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Redirecting…</title>
+    <meta http-equiv="refresh" content="0; url=/" />
+    <script>
+      (() => {
+        const target = '/';
+        try {
+          const loc = window.location;
+          const current = loc.pathname + loc.search + loc.hash;
+          if (current && current !== '/' && current !== '/index.html') {
+            window.location.replace('/');
+          } else {
+            window.location.replace(target);
+          }
+        } catch (e) {
+          window.location.replace(target);
+        }
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>
