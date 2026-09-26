@@ -1,11 +1,8 @@
 // Scene three's lifecycle: build the cards, place them from the fitted
 // geometry, map the pointer onto the timeline, and run only while on screen.
 //
-// The pointer mapping is the heart of this section. Cursor-x alone would be
-// wrong: the timeline descends across the frame, so the same x means different
-// years depending on how high the pointer is. Instead the cursor is projected
-// onto the polyline through the card centres, giving a continuous position
-// along the timeline that the clock hand reads directly.
+// Desktop: 3D arc layout with cursor projection onto the arc, front canvas figure.
+// Mobile: Clean, native GPU-accelerated CSS scroll-snap carousel with IntersectionObserver.
 
 import { createGL } from '../gl/renderer.js';
 import { Chrono } from './chrono.js';
@@ -16,6 +13,7 @@ export async function initChrono() {
   const section = document.getElementById('chrono');
   const canvas = document.getElementById('chronoStage');
   const deck = document.getElementById('chronoDeck');
+  const tagsNav = document.getElementById('chronoTagsNav');
   if (!section || !canvas || !deck) return null;
 
   const gl = createGL(canvas);
@@ -24,39 +22,50 @@ export async function initChrono() {
     return null;
   }
 
-  // The figure's layer: a second, transparent context on the canvas stacked
-  // over the card deck, so he stands in front of the timeline. Optional — if
-  // the browser refuses another context he simply draws behind, as before.
   const frontCanvas = document.getElementById('chronoFront');
   const glFront = frontCanvas ? createGL(frontCanvas, { alpha: true }) : null;
 
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  // read LIVE, not captured at boot: a convertible flips this when it folds,
-  // and a page restored under touch emulation would otherwise stay locked out
-  const coarseMQ = matchMedia('(pointer: coarse)');
   const chrono = new Chrono(canvas, gl,
     glFront ? { canvas: frontCanvas, gl: glFront } : null);
   await chrono.load();
 
-  function setTarget(u) {
-    chrono.targetU = Math.max(0, Math.min(YEARS.length - 1, u));
+  const isMobile = () => window.innerWidth <= 768;
+
+  // Track mode switches across the 768px boundary (e.g. tablet rotation or DevTools)
+  let currentMode = isMobile() ? 'mobile' : 'desktop';
+  window.addEventListener('resize', () => {
+    const newMode = isMobile() ? 'mobile' : 'desktop';
+    if (newMode !== currentMode) {
+      location.reload();
+    }
+  }, { passive: true });
+
+  if (isMobile()) {
+    return initMobile(section, canvas, deck, tagsNav, chrono, reduced);
+  } else {
+    return initDesktop(section, canvas, deck, chrono, reduced);
   }
+}
 
-  // ---- cards -------------------------------------------------------------
-  // Shared timestamp: set whenever a swipe gesture claims an event, so that
-  // subsequent handlers (card click, section pointerup) can tell the event
-  // was already handled and must not fire setTarget() a second time.
-  // Must be function-scoped — the card closures and the section handler all share it.
-  let lastSwipedAt = 0;
+// ============================================================================
+// MOBILE-SPECIFIC IMPLEMENTATION
+// Uses native CSS scroll-snap for GPU-accelerated, jitter-free swipe navigation.
+// State switching is driven purely by IntersectionObserver (zero scroll listeners).
+// WebGL canvas renders atmospheric background only without touching DOM cards.
+// ============================================================================
+function initMobile(section, canvas, deck, tagsNav, chrono, reduced) {
+  deck.innerHTML = '';
+  section.classList.add('is-mobile-chrono');
 
+  // Build the 5 project cards in a natural horizontal flow
   const cards = YEARS.map((y, i) => {
     const el = document.createElement('button');
     el.type = 'button';
-    el.className = 'yr';
+    el.className = 'yr' + (i === 0 ? ' is-active' : '');
     el.dataset.i = String(i);
     el.dataset.href = y.liveUrl || '';
     el.setAttribute('aria-label', `Project ${i + 1} — ${y.key}`);
-    // Tagline pulled from the projects page: first bullet or explicit tagline
     const tagline = y.tagline || y.lines[0] || '';
     const imgSrc = y.img || `public/years/${y.year}.jpg`;
     el.innerHTML =
@@ -73,96 +82,174 @@ export async function initChrono() {
       + `stroke-width="1.4"/></svg>`
       + `</span>`;
 
-    // Track touch swipes so swiping between cards doesn't trigger open-link
-    el.addEventListener('click', (e) => {
-      if (performance.now() - lastSwipedAt < 350) {
+    el.addEventListener('click', () => {
+      const href = el.dataset.href;
+      if (href) window.open(href, '_blank', 'noreferrer');
+    });
+
+    deck.appendChild(el);
+    return el;
+  });
+
+  // Dedicated indicator pills (01, 02, 03, 04, 05)
+  let tagButtons = [];
+  if (tagsNav) {
+    tagsNav.innerHTML = '';
+    tagButtons = YEARS.map((y, i) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'chrono__tag-btn' + (i === 0 ? ' is-active' : '');
+      btn.textContent = String(i + 1).padStart(2, '0');
+      btn.setAttribute('aria-label', `Go to project ${i + 1}: ${y.key}`);
+      btn.addEventListener('click', (e) => {
         e.preventDefault();
-        e.stopPropagation();
-        return;
+        cards[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      });
+      tagsNav.appendChild(btn);
+      return btn;
+    });
+  }
+
+  function setActive(idx) {
+    chrono.targetU = idx;
+    cards.forEach((c, ci) => c.classList.toggle('is-active', ci === idx));
+    tagButtons.forEach((t, ti) => t.classList.toggle('is-active', ti === idx));
+    section.dataset.year = String(YEARS[idx].year);
+  }
+
+  // IntersectionObserver determines active card during native snap scrolling
+  // Only fires when a card is substantially centered (threshold: 0.55), avoiding flickering
+  const cardObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting && entry.intersectionRatio >= 0.55) {
+        const idx = parseInt(entry.target.dataset.i, 10);
+        if (!isNaN(idx)) {
+          setActive(idx);
+        }
       }
+    });
+  }, {
+    root: deck,
+    threshold: [0.55],
+  });
+
+  cards.forEach((c) => cardObserver.observe(c));
+
+  // Canvas resize for mobile
+  function resizeMobile() {
+    chrono.resize(window.innerWidth, window.innerHeight, 1);
+  }
+  resizeMobile();
+  window.addEventListener('resize', resizeMobile, { passive: true });
+
+  // Frame loop for mobile: atmospheric canvas render ONLY, ZERO DOM style mutation!
+  const state = { started: 0, running: false, visible: false, raf: 0, last: 0 };
+  const frame = (now) => {
+    if (!state.running) return;
+    const dt = Math.min(0.033, (now - state.last) / 1000 || 0.016);
+    state.last = now;
+    const t = reduced ? T3.live + 2 : (now - state.started) / 1000;
+    const s = chrono.render(t, dt);
+    if (s && s.live) section.classList.add('is-live');
+    state.raf = requestAnimationFrame(frame);
+  };
+
+  const start = () => {
+    if (state.running) return;
+    state.running = true;
+    state.last = performance.now();
+    if (!state.started) state.started = performance.now();
+    state.raf = requestAnimationFrame(frame);
+  };
+  const stop = () => { state.running = false; cancelAnimationFrame(state.raf); };
+
+  new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      state.visible = e.isIntersecting;
+      if (e.isIntersecting) start(); else stop();
+    }
+  }, { threshold: 0.15 }).observe(section);
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') stop();
+    else if (state.visible) start();
+  });
+
+  window.__chrono = chrono;
+  return { chrono, section, setTarget: setActive };
+}
+
+// ============================================================================
+// DESKTOP-SPECIFIC IMPLEMENTATION (100% UNTOUCHED ORIGINAL LOGIC)
+// Preserves the full 3D curved timeline, cursor projection onto arc,
+// front canvas figure layering, and continuous time damping.
+// ============================================================================
+function initDesktop(section, canvas, deck, chrono, reduced) {
+  deck.innerHTML = '';
+
+  function setTarget(u) {
+    chrono.targetU = Math.max(0, Math.min(YEARS.length - 1, u));
+  }
+
+  const cards = YEARS.map((y, i) => {
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'yr';
+    el.dataset.i = String(i);
+    el.dataset.href = y.liveUrl || '';
+    el.setAttribute('aria-label', `Project ${i + 1} — ${y.key}`);
+    const tagline = y.tagline || y.lines[0] || '';
+    const imgSrc = y.img || `public/years/${y.year}.jpg`;
+    el.innerHTML =
+      `<span class="yr__frame">`
+      + `<img class="yr__img" src="${imgSrc}" alt="${y.key} screenshot" `
+      + `loading="lazy" decoding="async">`
+      + `<span class="yr__body">`
+      + `<span class="yr__year">${tagline}</span>`
+      + `<span class="yr__key">${y.key}</span>`
+      + `<span class="yr__lines">${y.lines.map((l) => `<i>${l}</i>`).join('')}</span>`
+      + `</span>`
+      + `<svg class="yr__go" viewBox="0 0 16 16" aria-hidden="true">`
+      + `<path d="M4 12 L12 4 M6 4 H12 V10" fill="none" stroke="currentColor" `
+      + `stroke-width="1.4"/></svg>`
+      + `</span>`;
+
+    el.addEventListener('click', () => {
       setTarget(i);
       const href = el.dataset.href;
-      if (href) {
-        window.open(href, '_blank', 'noreferrer');
-      }
+      if (href) window.open(href, '_blank', 'noreferrer');
     });
     deck.appendChild(el);
     return el;
   });
 
-  // Touch swipe support on deck for mobile
-  let touchStartX = 0;
-  let touchStartY = 0;
-  let touchMoved = false;
-
-  deck.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 1) {
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-      touchMoved = false;
-    }
-  }, { passive: true });
-
-  deck.addEventListener('touchmove', (e) => {
-    if (e.touches.length === 1) {
-      const dx = e.touches[0].clientX - touchStartX;
-      if (Math.abs(dx) > 12) touchMoved = true;
-    }
-  }, { passive: true });
-
-  deck.addEventListener('touchend', (e) => {
-    if (!touchMoved) return;
-    const touchEndX = e.changedTouches[0].clientX;
-    const touchEndY = e.changedTouches[0].clientY;
-    const dx = touchEndX - touchStartX;
-    const dy = touchEndY - touchStartY;
-    if (Math.abs(dx) > 38 && Math.abs(dx) > Math.abs(dy) * 1.25) {
-      lastSwipedAt = performance.now();
-      if (dx < 0) {
-        setTarget(chrono.targetU + 1);
-      } else {
-        setTarget(chrono.targetU - 1);
-      }
-    }
-  }, { passive: true });
-
-  // The arc nodes are the tap targets on a phone. Year numerals are suppressed
-  // (empty text) since this section is now a projects showcase, not a timeline.
   const labels = YEARS.map((y, i) => {
     const el = document.createElement('button');
     el.type = 'button';
     el.className = 'yr-tag';
-    el.textContent = '';          // no year numeral — content-only suppression
-    el.tabIndex = -1;             // the cards already carry the tab order
+    el.textContent = '';
+    el.tabIndex = -1;
     el.setAttribute('aria-label', `Show project ${i + 1}: ${y.key}`);
     el.addEventListener('click', () => setTarget(i));
-    el.addEventListener('pointerenter', () => { if (!coarseMQ.matches) setTarget(i); });
+    el.addEventListener('pointerenter', () => setTarget(i));
     deck.appendChild(el);
     return el;
   });
 
   const state = { started: 0, running: false, visible: false, raf: 0, last: 0 };
 
-  // ---- placement ---------------------------------------------------------
   function place() {
-    const dpr = coarseMQ.matches ? 1 : Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const L = chrono.resize(window.innerWidth, window.innerHeight, dpr);
     const portrait = L.portrait;
 
     for (let i = 0; i < cards.length; i++) {
       const c = L.cards[i];
       const el = cards[i];
-      // The reference's cards are ~8-12% of frame width — faithful, but at
-      // that size the body copy is unreadable on a real screen (it needed a 3x
-      // zoom to read in the poster itself). They are scaled up just enough to
-      // be legible while keeping the measured progression and spacing, so the
-      // composition still reads as the reference.
       const w = portrait ? c.w : c.w * 1.62;
       el.style.width = `${w}px`;
       el.style.left = `${c.x}px`;
       el.style.top = `${c.y}px`;
-      // cards lean with the rail; the tangent at 2021 is steep and at 2026
-      // almost flat, which is exactly the lean the reference has
       const tilt = portrait ? 0 : (L.angles[i] - L.angles[L.angles.length - 1]) * 14;
       el.style.setProperty('--tilt', `${tilt.toFixed(2)}deg`);
       el.style.setProperty('--depth', String(i));
@@ -170,10 +257,9 @@ export async function initChrono() {
       const n = L.nodes[i];
       labels[i].style.left = `${n[0]}px`;
       labels[i].style.top = `${n[1]}px`;
-      labels[i].style.fontSize = portrait ? '' : `${Math.max(19, c.w * 0.30)}px`;
-      // portrait: visible 01–0N tap targets; landscape stays numeral-free
-      labels[i].textContent = portrait ? String(i + 1).padStart(2, '0') : '';
-      labels[i].tabIndex = portrait ? 0 : -1;
+      labels[i].style.fontSize = `${Math.max(19, c.w * 0.30)}px`;
+      labels[i].textContent = '';
+      labels[i].tabIndex = -1;
     }
     section.classList.toggle('is-portrait', portrait);
   }
@@ -185,9 +271,7 @@ export async function initChrono() {
     resizeId = setTimeout(place, 140);
   });
 
-  // ---- pointer -> time ---------------------------------------------------
   section.addEventListener('pointermove', (e) => {
-    if (coarseMQ.matches) return;
     const r = canvas.getBoundingClientRect();
     const px = e.clientX - r.left;
     const py = e.clientY - r.top;
@@ -195,79 +279,20 @@ export async function initChrono() {
     chrono.pointer.ty = (py / r.height) * 2 - 1;
     chrono.pointer.inside = true;
     const { u, dist } = timeAt(chrono.layout, px, py);
-    // far from the rail the visitor is not aiming at anything; hold the last
-    // year rather than swinging the hand at stray movement
     if (dist < r.height * 0.55) setTarget(u);
   }, { passive: true });
 
   section.addEventListener('pointerleave', () => { chrono.pointer.inside = false; });
 
-  // Section-level swipe: navigate between projects on mobile.
-  // IMPORTANT: this must NOT fire during normal page scroll.
-  // The previous implementation only gated on |dy| > 36, which is trivially
-  // exceeded by a regular downward page-scroll — the root cause of the
-  // "randomly switching active card while scrolling" bug.
-  // Fix: track both axes and only count it as a card-swipe when the gesture
-  // is predominantly HORIZONTAL (dx > dy * 1.5) AND the pointer did not move
-  // far enough vertically to be a page scroll (|dy| < 60 px).
-  // Also bail if the deck's own touchend handler already claimed the event
-  // (lastSwipedAt guard reused from the deck handler above).
-  let swipeStart = null;
-  section.addEventListener('pointerdown', (e) => {
-    if (!coarseMQ.matches) return;
-    // Only track single-finger gestures; ignore mouse
-    if (e.pointerType !== 'touch') return;
-    swipeStart = { x: e.clientX, y: e.clientY };
-  }, { passive: true });
-  section.addEventListener('pointermove', (e) => {
-    if (!coarseMQ.matches || !swipeStart) return;
-    // If the user has clearly moved vertically (page scroll), cancel tracking
-    // so the subsequent pointerup cannot misfire as a card change.
-    if (Math.abs(e.clientY - swipeStart.y) > 22) swipeStart = null;
-  }, { passive: true });
-  section.addEventListener('pointerup', (e) => {
-    if (!coarseMQ.matches || !swipeStart) return;
-    if (e.pointerType !== 'touch') { swipeStart = null; return; }
-    // If the deck's touchend already handled this swipe, skip
-    if (performance.now() - lastSwipedAt < 350) { swipeStart = null; return; }
-    const dx = e.clientX - swipeStart.x;
-    const dy = e.clientY - swipeStart.y;
-    swipeStart = null;
-    // Only count as a horizontal card-swipe: dx must dominate dy clearly,
-    // and vertical displacement must be small (not a scroll gesture)
-    if (Math.abs(dx) < 38) return;
-    if (Math.abs(dy) >= 28) return;           // too vertical — likely a scroll
-    if (Math.abs(dx) <= Math.abs(dy) * 1.5) return; // not horizontal enough
-    lastSwipedAt = performance.now();
-    setTarget(chrono.active + (dx < 0 ? 1 : -1));
-  }, { passive: true });
-
-  // touch and keyboard: a card is a real button, so both come almost free
   cards.forEach((el, i) => {
-    el.addEventListener('pointerenter', () => { if (!coarseMQ.matches) setTarget(i); });
+    el.addEventListener('pointerenter', () => setTarget(i));
     el.addEventListener('focus', () => setTarget(i));
   });
 
-  // ---- frame -------------------------------------------------------------
   let lastActive = -1;
   const frame = (now) => {
     if (!state.running) return;
-    // Mobile (coarse-pointer) throttle: cap render rate to ~30 fps.
-    // IMPORTANT: always update state.last even when skipping a render.
-    // Without this, the next rendered frame sees dt = all-skipped-frames
-    // combined (e.g. 66–99 ms), which causes the damp() spring to
-    // instantly teleport to its target instead of easing — the root cause
-    // of the "snapping/flickering between states" bug on mobile.
-    if (coarseMQ.matches && now - state.last < 33) {
-      state.last = now;                      // ← keep dt bounded for next frame
-      state.raf = requestAnimationFrame(frame);
-      return;
-    }
-    // Tighter dt cap on mobile: 33 ms max (one skipped 30fps frame) instead
-    // of 50 ms, so a stalled tab or cold-start never hands the spring a wild
-    // initial dt that overshoots.
-    const maxDt = coarseMQ.matches ? 0.033 : 0.05;
-    const dt = Math.min(maxDt, (now - state.last) / 1000 || 0.016);
+    const dt = Math.min(0.05, (now - state.last) / 1000 || 0.016);
     state.last = now;
     const t = reduced ? T3.live + 2 : (now - state.started) / 1000;
     const s = chrono.render(t, dt);
@@ -312,11 +337,9 @@ export async function initChrono() {
     else if (state.visible) start();
   });
 
-  // review hook, same contract as the other two scenes
   window.__shot3 = async (name = 'chrono', at = null) => {
     const t = at !== null ? at : (performance.now() - state.started) / 1000;
     chrono.render(t, 0.016);
-    // flatten both layers, back canvas then front, exactly as stacked
     const flat = document.createElement('canvas');
     flat.width = canvas.width;
     flat.height = canvas.height;

@@ -44,6 +44,11 @@
   to   { opacity: 1; clip-path: inset(0 0% 0 0); }
 }
 
+/* Hide mobile project tags nav on desktop */
+.chrono__tags-nav {
+  display: none;
+}
+
 /* ============================================================
    MOBILE BREAKPOINT — ≤ 768 px
    ============================================================ */
@@ -165,123 +170,231 @@
   }
 
   /* ================================================================
-     2. CHRONO / PROJECTS SHOWCASE — mobile premium treatment
+  /* ================================================================
+     2. CHRONO / PROJECTS SHOWCASE — mobile CSS scroll-snap carousel
      ================================================================ */
 
-  /* Section heading: tighten and sharpen for mobile */
+  /* Section heading: centered and sharp on mobile */
+  .chrono {
+    height: auto !important;
+    min-height: 100svh;
+    padding-bottom: 24px;
+  }
+
+  .chrono__pin {
+    position: relative !important;
+    top: auto !important;
+    height: auto !important;
+    min-height: 100svh;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 64px 0 24px !important;
+  }
+
   .chrono__title {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    text-align: center !important;
+    display: flex !important;
+    justify-content: center !important;
+    margin: 0 auto 10px !important;
     font-size: clamp(14px, 5vw, 22px) !important;
     letter-spacing: 0.22em !important;
-    gap: 0.18em !important;
-    /* cream glow */
+    gap: 0.25em !important;
+    z-index: 12 !important;
     text-shadow:
       0 0 12px rgba(244, 233, 220, 0.16),
       0 0 32px rgba(244, 233, 220, 0.06);
-  }
-
-  /* Portrait (phone) mode: the section title animates in with a reveal wipe */
-  .chrono.is-portrait .chrono__title {
     animation: mob-title-reveal 0.8s cubic-bezier(.16, 1, .3, 1) 0.3s both;
   }
 
-  /* Year-tag tap targets (numbered 01–06): make them feel like real buttons */
-  .chrono.is-portrait .yr-tag {
-    /* red active glow when selected */
-    position: relative;
-    border-radius: 3px;
-    transition:
-      color 0.35s ease,
-      text-shadow 0.35s ease,
-      transform 0.4s cubic-bezier(.16, 1, .3, 1) !important;
-  }
-  .chrono.is-portrait .yr-tag.is-active {
-    color: #fff4e4 !important;
-    text-shadow:
-      0 0 5px rgba(255, 170, 90, .55),
-      0 0 18px rgba(255, 70, 20, .65),
-      0 0 48px rgba(222, 27, 28, .45) !important;
-    transform: translate(-50%, -50%) scale(1.12) !important;
+  /* Dedicated project selector indicator pills */
+  .chrono__tags-nav {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 6px auto 14px !important;
+    z-index: 15 !important;
+    position: relative !important;
+    pointer-events: auto !important;
   }
 
-  /* Cards: premium mobile card styling */
-  .chrono.is-portrait .yr__frame {
-    /* richer gradient and border on mobile */
-    background: linear-gradient(160deg, rgba(40, 26, 20, .96), rgba(12, 8, 7, .98)) !important;
-    border-radius: 14px !important;
-    /* animated glow on the active card */
-    transition:
-      border-color 0.45s ease,
-      box-shadow 0.45s ease !important;
+  .chrono__tag-btn {
+    appearance: none;
+    border: 1px solid rgba(255, 150, 80, 0.25);
+    background: rgba(20, 10, 8, 0.7);
+    color: #c99055;
+    font-family: var(--ui);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    -webkit-tap-highlight-color: transparent;
   }
-  .chrono.is-portrait .yr.is-active .yr__frame {
+
+  .chrono__tag-btn.is-active {
+    color: #fff4e4;
+    border-color: var(--mob-red-hot);
+    background: rgba(222, 27, 28, 0.3);
+    box-shadow: 0 0 16px rgba(222, 27, 28, 0.5);
+    transform: scale(1.08);
+  }
+
+  /* Horizontal swipeable scroll-snap card deck */
+  .chrono__deck {
+    position: relative !important;
+    inset: auto !important;
+    perspective: none !important;
+    pointer-events: auto !important;
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch;
+    gap: 16px !important;
+    padding: 10px calc(50vw - min(82vw, 320px) / 2) 16px !important;
+    margin: 0 !important;
+    scrollbar-width: none !important;
+    z-index: 12 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .chrono__deck::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Full-width stable cards with native GPU scroll-snap */
+  .chrono__deck .yr,
+  .chrono.is-portrait .yr {
+    flex: 0 0 min(82vw, 320px) !important;
+    width: min(82vw, 320px) !important;
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    transform: scale(0.96) !important;
+    opacity: 0.55 !important;
+    scroll-snap-align: center !important;
+    scroll-snap-stop: always !important;
+    pointer-events: auto !important;
+    transition: opacity 0.3s ease, transform 0.3s ease !important;
+    text-align: left;
+    margin: 0 !important;
+  }
+
+  .chrono__deck .yr.is-active,
+  .chrono.is-portrait .yr.is-active {
+    opacity: 1 !important;
+    transform: scale(1) !important;
+    pointer-events: auto !important;
+  }
+
+  .chrono__deck .yr__frame {
+    background: linear-gradient(160deg, rgba(38, 26, 20, .96), rgba(12, 8, 7, .98)) !important;
+    border-radius: 14px !important;
+    border: 1px solid rgba(255, 150, 80, 0.25) !important;
+    box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.9) !important;
+    transition: border-color 0.35s ease, box-shadow 0.35s ease !important;
+  }
+
+  .chrono__deck .yr.is-active .yr__frame {
     border-color: rgba(255, 80, 36, 0.9) !important;
     box-shadow:
-      0 20px 56px -18px rgba(0, 0, 0, 0.95),
-      0 0 48px rgba(222, 27, 28, 0.35),
-      0 0 24px rgba(255, 62, 20, 0.22),
+      0 20px 48px -14px rgba(0, 0, 0, 0.95),
+      0 0 32px rgba(222, 27, 28, 0.3),
       inset 0 1px 0 rgba(255, 190, 140, 0.12) !important;
-    animation: mob-glow-pulse 2.8s ease-in-out infinite;
   }
 
-  /* Card image: more saturated and vivid for the active card */
-  .chrono.is-portrait .yr.is-active .yr__img {
-    filter:
-      saturate(1.1)
-      brightness(0.88)
-      contrast(1.08) !important;
+  .chrono__deck .yr__img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 8px;
+    filter: saturate(0.85) brightness(0.8);
+    transition: filter 0.35s ease;
   }
 
-  /* Card key / title: bigger and more legible on mobile */
-  .chrono.is-portrait .yr__key {
+  .chrono__deck .yr.is-active .yr__img {
+    filter: saturate(1.1) brightness(0.95) contrast(1.05);
+  }
+
+  .chrono__deck .yr__body {
+    padding: 10px 4px 4px !important;
+  }
+
+  .chrono__deck .yr__year {
+    font-size: clamp(11px, 3.2vw, 13.5px) !important;
+    letter-spacing: 0.14em !important;
+  }
+
+  .chrono__deck .yr__key {
     font-size: clamp(15px, 4.6vw, 20px) !important;
     letter-spacing: 0.10em !important;
     line-height: 1.15 !important;
-    /* warm accent color for active card title */
-    transition: color 0.35s ease !important;
-  }
-  .chrono.is-portrait .yr.is-active .yr__key {
     color: #ffb080 !important;
   }
 
-  /* Card body text lines: comfortable reading size */
-  .chrono.is-portrait .yr__lines i {
-    font-size: clamp(10px, 3vw, 12px) !important;
-    letter-spacing: 0.08em !important;
-    line-height: 1.5 !important;
+  .chrono__deck .yr__lines {
+    display: grid !important;
+    gap: 3px;
+    margin-top: 4px;
   }
-  .chrono.is-portrait .yr.is-active .yr__lines i {
+
+  .chrono__deck .yr__lines i {
+    font-size: clamp(9.5px, 2.8vw, 11px) !important;
+    letter-spacing: 0.08em !important;
+    line-height: 1.4 !important;
+    color: #9d9088;
+  }
+
+  .chrono__deck .yr.is-active .yr__lines i {
     color: #d4c4ba !important;
   }
 
-  /* Arrow icon: always visible on mobile (not just hover) + animation */
-  .chrono.is-portrait .yr__go {
-    opacity: 0.6 !important;
+  .chrono__deck .yr__go {
+    opacity: 0.8 !important;
     transform: none !important;
-    width: 18px !important;
-    height: 18px !important;
+    width: 20px !important;
+    height: 20px !important;
     color: #ffd0b0 !important;
-    transition: opacity 0.35s ease, transform 0.35s ease, color 0.35s ease !important;
+    right: 12px !important;
+    bottom: 12px !important;
   }
-  .chrono.is-portrait .yr.is-active .yr__go {
+
+  .chrono__deck .yr.is-active .yr__go {
     opacity: 1 !important;
     color: var(--mob-red-hot) !important;
-    animation: mob-arrow-bounce 1.6s ease-in-out infinite;
+  }
+
+  .chrono__deck .yr-tag {
+    display: none !important;
   }
 
   /* ---- Swipe indicator: subtle "swipe to explore" hint on mobile ---- */
   .chrono__hint {
-    /* On portrait, position the swipe hint at the bottom */
+    position: relative !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    text-align: center !important;
+    margin: 8px auto 0 !important;
     font-size: 8px !important;
     color: rgba(255, 160, 60, 0.7) !important;
     letter-spacing: 0.28em !important;
+    z-index: 12 !important;
   }
 
-  /* Bottom-right note: retain it on mobile at small but readable size */
-  .chrono__note--br {
-    font-size: 7.5px !important;
-    letter-spacing: 0.18em !important;
-    opacity: 0.55 !important;
-    line-height: 1.8 !important;
+  .chrono__hint i,
+  .chrono__note--br,
+  #chronoFront {
+    display: none !important;
   }
 
   /* Decorative shimmer line: replaces the complex arc on mobile.
