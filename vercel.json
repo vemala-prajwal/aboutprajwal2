@@ -1,10 +1,6 @@
 {
+  "buildCommand": null,
   "cleanUrls": false,
-  "trailingSlash": false,
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+  "outputDirectory": ".",
+  "trailingSlash": false
 }

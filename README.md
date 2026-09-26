@@ -19,11 +19,15 @@ hand across 2021–2026, and whichever year it points at lights up.
 ## Run it
 
 ```bash
-python tools/serve.py 5173
+npx --yes serve . --listen 5173
 ```
 
 then open http://localhost:5173. Any static file server works in production —
 there is nothing to compile.
+
+## Deploy to Vercel
+
+Import the repository and use the **Other** framework preset. Leave the build and install commands empty, and set the output directory to `.` (the repository root). The site is served directly from `index.html`; no framework, package installation, or build step is required.
 
 Review helpers (dev only):
 
@@ -345,5 +349,6 @@ Further sections continue below the universe: add them inside `main.flow` with
 a solid background and normal document flow takes over from there. The hero is a
 fixed full-viewport layer behind `.flow`, and its video decoding is stopped
 automatically once it scrolls out of view.
-#   a b o u t p r a j w a l 2  
+#   a b o u t p r a j w a l 2 
+ 
  
