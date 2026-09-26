@@ -1,0 +1,626 @@
+/* ==========================================================================
+   PRAJWAL — mobile.css
+   PURPOSE: Purely mobile-scoped visual upgrades (≤ 768 px).
+   CONSTRAINT: Every rule sits inside a max-width media query so it has
+               absolutely zero effect on viewports wider than 768 px.
+               No existing base style was edited.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Mobile animation keyframes
+   (defined outside a media query so the browser has them for all widths,
+    but they are ONLY applied inside the mobile rules below.)
+   -------------------------------------------------------------------------- */
+@keyframes mob-fade-up {
+  from { opacity: 0; transform: translateY(32px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes mob-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes mob-glow-pulse {
+  0%, 100% { box-shadow: 0 0 18px rgba(222, 27, 28, 0.28), 0 0 48px rgba(222, 27, 28, 0.10); }
+  50%       { box-shadow: 0 0 28px rgba(222, 27, 28, 0.52), 0 0 72px rgba(222, 27, 28, 0.24); }
+}
+@keyframes mob-border-glow {
+  0%, 100% { border-color: rgba(222, 27, 28, 0.36); }
+  50%       { border-color: rgba(255, 42, 43, 0.75); }
+}
+@keyframes mob-arrow-bounce {
+  0%, 100% { transform: translate(0, 0); }
+  50%       { transform: translate(2px, -2px); }
+}
+@keyframes mob-rail-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes mob-dot-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50%       { transform: scale(1.35); opacity: 1; }
+}
+@keyframes mob-title-reveal {
+  from { opacity: 0; clip-path: inset(0 100% 0 0); }
+  to   { opacity: 1; clip-path: inset(0 0% 0 0); }
+}
+
+/* ============================================================
+   MOBILE BREAKPOINT — ≤ 768 px
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* ----------------------------------------------------------------
+     CSS custom properties — mobile-specific overrides
+     ---------------------------------------------------------------- */
+  :root {
+    --mob-red:        #de1b1c;
+    --mob-red-hot:    #ff2a2b;
+    --mob-red-glow:   rgba(222, 27, 28, 0.22);
+    --mob-red-border: rgba(222, 27, 28, 0.38);
+    --mob-section-enter-dur: 0.72s;
+    --mob-section-enter-ease: cubic-bezier(.16, 1, .3, 1);
+  }
+
+  /* ----------------------------------------------------------------
+     Scroll-reveal base: sections fade-up when they become visible.
+     JS adds .mob-visible once the IntersectionObserver fires.
+     ---------------------------------------------------------------- */
+  .mob-reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition:
+      opacity  var(--mob-section-enter-dur) var(--mob-section-enter-ease),
+      transform var(--mob-section-enter-dur) var(--mob-section-enter-ease);
+  }
+  .mob-reveal.mob-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .mob-reveal.mob-visible.mob-delay-1 { transition-delay: 0.08s; }
+  .mob-reveal.mob-visible.mob-delay-2 { transition-delay: 0.16s; }
+  .mob-reveal.mob-visible.mob-delay-3 { transition-delay: 0.26s; }
+  .mob-reveal.mob-visible.mob-delay-4 { transition-delay: 0.38s; }
+
+  /* ================================================================
+     1. HERO SECTION — mobile premium treatment
+     ================================================================ */
+
+  /* The welcome strip: bigger, bolder, more dramatic on mobile */
+  .welcome {
+    font-size: clamp(12px, 3.8vw, 17px) !important;
+    font-weight: 700;
+    letter-spacing: 0.14em !important;
+    /* subtle ambient glow to make it feel lit */
+    text-shadow:
+      0 0 .06em rgba(0, 0, 0, .95),
+      0 0 .55em rgba(0, 0, 0, .92),
+      0 0 1.4em rgba(0, 0, 0, .75),
+      0 0 2.4em rgba(222, 27, 28, 0.15) !important;
+  }
+
+  /* Hero image — larger, more cinematic presence, anchored to bottom */
+  .hero-image {
+    /* stronger vignette-style fade toward the bottom via filter */
+    filter: drop-shadow(0 -8px 32px rgba(222, 27, 28, 0.12));
+  }
+
+  /* Make the PRAJWAL logo in the header carry more weight on mobile */
+  .mark-word {
+    font-size: clamp(20px, 5.8vw, 28px) !important;
+    filter: saturate(1.45) contrast(1.22) brightness(1.24) !important;
+  }
+
+  /* Header: add a barely-perceptible red underline accent to ground it */
+  .hdr {
+    /* a faint red bottom glow instead of the chamfered rule (which still
+       renders — this just adds a second layer of warmth on mobile) */
+    border-bottom: 1px solid rgba(222, 27, 28, 0.12);
+  }
+
+  /* Burger button: make the lines red-tinted on active for brand consistency */
+  .hdr__burger span {
+    background: var(--paper) !important;
+    transition: background 0.3s ease, transform 0.4s cubic-bezier(.16, 1, .3, 1) !important;
+  }
+  .hdr__burger:hover span,
+  .hdr__burger:focus-visible span {
+    background: var(--mob-red-hot) !important;
+  }
+
+  /* The menu overlay: enhance the entrance with slide-in nav items */
+  .menu {
+    /* slightly deeper backdrop for mobile depth */
+    background: rgba(0, 0, 0, 0.96) !important;
+  }
+
+  /* Menu items get a red scan-line accent at the bottom when active */
+  .menu a.is-active {
+    position: relative;
+  }
+  .menu a.is-active::after {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--mob-red-hot);
+    margin: 4px auto 0;
+    border-radius: 1px;
+    box-shadow: 0 0 8px rgba(255, 42, 43, 0.6);
+    animation: mob-fade-in 0.4s ease 0.3s both;
+  }
+
+  /* "Welcome to my world" strip — show the dots on mobile too at reasonable size */
+  .welcome__dots {
+    display: inline !important;   /* override the @media(max-width:480px) hide */
+    font-size: 0.8em;
+    opacity: 0.6;
+  }
+
+  /* Dot grid: restore on mobile but smaller, in bottom-right corner */
+  .grid-dots {
+    display: grid !important;   /* override the 480px hide */
+    grid-template-columns: repeat(6, 1fr) !important;
+    transform: translate(-100%, -100%) scale(0.55) !important;
+    opacity: 0.7 !important;
+  }
+
+  /* ================================================================
+     2. CHRONO / PROJECTS SHOWCASE — mobile premium treatment
+     ================================================================ */
+
+  /* Section heading: tighten and sharpen for mobile */
+  .chrono__title {
+    font-size: clamp(14px, 5vw, 22px) !important;
+    letter-spacing: 0.22em !important;
+    gap: 0.18em !important;
+    /* cream glow */
+    text-shadow:
+      0 0 12px rgba(244, 233, 220, 0.16),
+      0 0 32px rgba(244, 233, 220, 0.06);
+  }
+
+  /* Portrait (phone) mode: the section title animates in with a reveal wipe */
+  .chrono.is-portrait .chrono__title {
+    animation: mob-title-reveal 0.8s cubic-bezier(.16, 1, .3, 1) 0.3s both;
+  }
+
+  /* Year-tag tap targets (numbered 01–06): make them feel like real buttons */
+  .chrono.is-portrait .yr-tag {
+    /* red active glow when selected */
+    position: relative;
+    border-radius: 3px;
+    transition:
+      color 0.35s ease,
+      text-shadow 0.35s ease,
+      transform 0.4s cubic-bezier(.16, 1, .3, 1) !important;
+  }
+  .chrono.is-portrait .yr-tag.is-active {
+    color: #fff4e4 !important;
+    text-shadow:
+      0 0 5px rgba(255, 170, 90, .55),
+      0 0 18px rgba(255, 70, 20, .65),
+      0 0 48px rgba(222, 27, 28, .45) !important;
+    transform: translate(-50%, -50%) scale(1.12) !important;
+  }
+
+  /* Cards: premium mobile card styling */
+  .chrono.is-portrait .yr__frame {
+    /* richer gradient and border on mobile */
+    background: linear-gradient(160deg, rgba(40, 26, 20, .96), rgba(12, 8, 7, .98)) !important;
+    border-radius: 14px !important;
+    /* animated glow on the active card */
+    transition:
+      border-color 0.45s ease,
+      box-shadow 0.45s ease !important;
+  }
+  .chrono.is-portrait .yr.is-active .yr__frame {
+    border-color: rgba(255, 80, 36, 0.9) !important;
+    box-shadow:
+      0 20px 56px -18px rgba(0, 0, 0, 0.95),
+      0 0 48px rgba(222, 27, 28, 0.35),
+      0 0 24px rgba(255, 62, 20, 0.22),
+      inset 0 1px 0 rgba(255, 190, 140, 0.12) !important;
+    animation: mob-glow-pulse 2.8s ease-in-out infinite;
+  }
+
+  /* Card image: more saturated and vivid for the active card */
+  .chrono.is-portrait .yr.is-active .yr__img {
+    filter:
+      saturate(1.1)
+      brightness(0.88)
+      contrast(1.08) !important;
+  }
+
+  /* Card key / title: bigger and more legible on mobile */
+  .chrono.is-portrait .yr__key {
+    font-size: clamp(15px, 4.6vw, 20px) !important;
+    letter-spacing: 0.10em !important;
+    line-height: 1.15 !important;
+    /* warm accent color for active card title */
+    transition: color 0.35s ease !important;
+  }
+  .chrono.is-portrait .yr.is-active .yr__key {
+    color: #ffb080 !important;
+  }
+
+  /* Card body text lines: comfortable reading size */
+  .chrono.is-portrait .yr__lines i {
+    font-size: clamp(10px, 3vw, 12px) !important;
+    letter-spacing: 0.08em !important;
+    line-height: 1.5 !important;
+  }
+  .chrono.is-portrait .yr.is-active .yr__lines i {
+    color: #d4c4ba !important;
+  }
+
+  /* Arrow icon: always visible on mobile (not just hover) + animation */
+  .chrono.is-portrait .yr__go {
+    opacity: 0.6 !important;
+    transform: none !important;
+    width: 18px !important;
+    height: 18px !important;
+    color: #ffd0b0 !important;
+    transition: opacity 0.35s ease, transform 0.35s ease, color 0.35s ease !important;
+  }
+  .chrono.is-portrait .yr.is-active .yr__go {
+    opacity: 1 !important;
+    color: var(--mob-red-hot) !important;
+    animation: mob-arrow-bounce 1.6s ease-in-out infinite;
+  }
+
+  /* ---- Swipe indicator: subtle "swipe to explore" hint on mobile ---- */
+  .chrono__hint {
+    /* On portrait, position the swipe hint at the bottom */
+    font-size: 8px !important;
+    color: rgba(255, 160, 60, 0.7) !important;
+    letter-spacing: 0.28em !important;
+  }
+
+  /* Bottom-right note: retain it on mobile at small but readable size */
+  .chrono__note--br {
+    font-size: 7.5px !important;
+    letter-spacing: 0.18em !important;
+    opacity: 0.55 !important;
+    line-height: 1.8 !important;
+  }
+
+  /* Decorative shimmer line: replaces the complex arc on mobile.
+     A single horizontal glowing rail above the section heading. */
+  .chrono__pin::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(222, 27, 28, 0.0) 10%,
+      rgba(255, 62, 20, 0.55) 50%,
+      rgba(222, 27, 28, 0.0) 90%,
+      transparent 100%
+    );
+    pointer-events: none;
+    z-index: 7;
+  }
+  /* And a matching one at the bottom */
+  .chrono__pin::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 62, 20, 0.3) 50%,
+      transparent 100%
+    );
+    pointer-events: none;
+    z-index: 7;
+  }
+
+  /* ================================================================
+     3. CONTACT SECTION — mobile premium treatment
+     ================================================================ */
+
+  /* Increase the headline drama on mobile: tighter tracking, larger */
+  .contact-panel h1,
+  .contact-panel h2 {
+    font-size: clamp(3rem, 14.5vw, 5rem) !important;
+    line-height: 0.88 !important;
+    letter-spacing: -0.01em;
+    /* subtle text glow on the main heading */
+    text-shadow:
+      0 0 40px rgba(237, 237, 237, 0.06),
+      0 0 80px rgba(222, 27, 28, 0.04);
+  }
+
+  /* The italic "something real." part: red stroke + glow */
+  .contact-panel h1 em,
+  .contact-panel h2 em {
+    color: var(--mob-red) !important;
+    -webkit-text-stroke: 1.5px var(--mob-red-hot) !important;
+    text-shadow:
+      0 0 18px rgba(255, 42, 43, 0.28),
+      0 0 48px rgba(222, 27, 28, 0.16) !important;
+  }
+
+  /* Eyebrow label: more prominent on mobile */
+  .contact-panel__eyebrow {
+    font-size: 0.82rem !important;
+    letter-spacing: 0.32em !important;
+    /* add a tiny glow dot before the text */
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+  .contact-panel__eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--mob-red-hot);
+    box-shadow: 0 0 8px rgba(255, 42, 43, 0.7);
+    flex-shrink: 0;
+    animation: mob-dot-pulse 2s ease-in-out infinite;
+  }
+
+  /* Left accent bar on the intro: thicker and glowing */
+  .contact-panel__intro::before {
+    width: 2.5px !important;
+    background: linear-gradient(
+      var(--mob-red-hot),
+      rgba(222, 27, 28, 0.4),
+      rgba(222, 27, 28, 0)
+    ) !important;
+    box-shadow: 0 0 8px rgba(255, 42, 43, 0.35);
+  }
+
+  /* Contact info grid: single column, glowing border on mobile */
+  .contact-info {
+    /* animated red border instead of static */
+    animation: mob-border-glow 3s ease-in-out infinite;
+    border-radius: 12px !important;
+    background: rgba(222, 27, 28, 0.14) !important;
+    box-shadow:
+      0 24px 64px -20px rgba(0, 0, 0, 0.95),
+      0 0 40px -4px rgba(222, 27, 28, 0.18),
+      inset 0 1px 0 rgba(255, 120, 100, 0.10) !important;
+  }
+
+  /* Contact items: tap-state replaces hover on mobile */
+  .contact-info__item {
+    min-height: 110px !important;
+    padding: 22px 20px !important;
+    /* thicker separator line between items */
+    border-bottom: 1px solid rgba(222, 27, 28, 0.12);
+    /* Touch press state */
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      background 0.25s ease,
+      box-shadow 0.25s ease !important;
+    /* ensure 44px min touch target (padding + content already achieves this) */
+  }
+  .contact-info__item:last-child {
+    border-bottom: none;
+  }
+  /* Active/pressed state for touch (the :hover equivalent on mobile) */
+  a.contact-info__item:active {
+    background: linear-gradient(150deg, rgba(38, 14, 16, 0.98) 0%, rgba(16, 7, 9, 0.99) 100%) !important;
+    box-shadow:
+      inset 0 0 28px rgba(222, 27, 28, 0.20),
+      0 0 24px rgba(222, 27, 28, 0.25) !important;
+    transform: translateY(-1px);
+  }
+
+  /* Arrow icon: always partially visible, with press animation */
+  .contact-info__arrow {
+    opacity: 1 !important;
+    background: rgba(222, 27, 28, 0.10) !important;
+    border-color: rgba(222, 27, 28, 0.28) !important;
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 1rem !important;
+    /* Pulse on the active (Discord/non-link) item suppressed below */
+  }
+  a.contact-info__item:active .contact-info__arrow {
+    transform: translate(3px, -3px) !important;
+    background: var(--mob-red) !important;
+    border-color: var(--mob-red-hot) !important;
+    color: #fff !important;
+    box-shadow: 0 0 14px rgba(255, 42, 43, 0.65) !important;
+  }
+
+  /* Labels: red on active */
+  a.contact-info__item:active .contact-info__label {
+    color: var(--mob-red-hot) !important;
+  }
+
+  /* Strong text: glows on tap */
+  a.contact-info__item:active strong {
+    color: #fff !important;
+    text-shadow:
+      0 0 12px rgba(255, 255, 255, 0.22),
+      0 0 24px rgba(222, 27, 28, 0.30) !important;
+  }
+
+  /* Vertical "DIRECT LINES / 2026" sidebar text: increase contrast */
+  .contact-inline::after {
+    color: rgba(237, 237, 237, 0.32) !important;
+    font-size: 0.62rem !important;
+  }
+
+  /* Contact section background: stronger radial on mobile */
+  .contact-page {
+    background:
+      radial-gradient(circle at 50% 18%, rgba(222, 27, 28, 0.22), transparent 22rem),
+      linear-gradient(160deg, #050505 0%, #150607 48%, #000 100%) !important;
+  }
+
+  /* Footer: clean, centered, with red accent on the back-to-top link */
+  .contact-page__footer {
+    border-top: 1px solid rgba(222, 27, 28, 0.14);
+    padding-top: 22px !important;
+  }
+  .contact-page__footer a {
+    color: var(--mob-red-hot) !important;
+    letter-spacing: 0.2em;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    transition: color 0.25s ease, text-shadow 0.25s ease;
+  }
+  .contact-page__footer a:active {
+    text-shadow: 0 0 10px rgba(255, 42, 43, 0.5);
+  }
+
+  /* ================================================================
+     4. NAVIGATION — mobile premium treatment
+     ================================================================ */
+
+  /* Full-screen menu overlay: premium radial lighting from centre */
+  .menu {
+    background:
+      radial-gradient(circle at 50% 42%, rgba(222, 27, 28, 0.12), transparent 55%),
+      rgba(0, 0, 0, 0.96) !important;
+  }
+
+  /* Nav links in menu: staggered slide-up already exists via base CSS;
+     add a tasteful red glow on active/hover */
+  .menu a:focus-visible,
+  .menu a:active {
+    filter: saturate(1.6) contrast(1.3) brightness(1.5) !important;
+    outline: none;
+  }
+
+  /* Menu tag "••• Welcome to my world •••" */
+  .menu__tag {
+    font-size: 12px !important;
+    letter-spacing: 0.32em !important;
+    margin-top: 32px !important;
+    color: rgba(138, 138, 138, 0.75) !important;
+  }
+
+  /* Burger lines: slightly thicker for easier tap */
+  .hdr__burger span {
+    height: 2px !important;
+    width: 28px !important;
+  }
+}
+
+/* ============================================================
+   MOBILE BREAKPOINT — ≤ 480 px  (extra dramatic on smallest phones)
+   ============================================================ */
+@media (max-width: 480px) {
+
+  /* Restore dot grid even on 375px screens (overrides the base 480px hide) */
+  .grid-dots {
+    display: grid !important;
+    grid-template-columns: repeat(5, 1fr) !important;
+    transform: translate(-100%, -100%) scale(0.46) !important;
+    opacity: 0.55 !important;
+  }
+
+  /* Welcome strip: compact but visible */
+  .welcome {
+    font-size: clamp(11px, 3.4vw, 14px) !important;
+  }
+  .welcome__dots {
+    display: inline !important;
+    font-size: 0.7em;
+    opacity: 0.5;
+  }
+
+  /* Contact headline: use full bleed */
+  .contact-panel h1,
+  .contact-panel h2 {
+    font-size: clamp(2.6rem, 14vw, 3.8rem) !important;
+    line-height: 0.87 !important;
+  }
+
+  /* Contact items: ensure comfortable touch targets */
+  .contact-info__item {
+    min-height: 98px !important;
+    padding: 18px 16px !important;
+  }
+
+  /* Arrow icons: full-size 44px touch target zone (via padding) */
+  .contact-info__arrow {
+    width: 36px !important;
+    height: 36px !important;
+    top: 14px !important;
+    right: 14px !important;
+  }
+
+  /* Chrono title on small phones */
+  .chrono__title {
+    font-size: clamp(12px, 4.5vw, 16px) !important;
+    letter-spacing: 0.16em !important;
+  }
+
+  /* Card key on smallest phones: still bold */
+  .chrono.is-portrait .yr__key {
+    font-size: clamp(14px, 4.2vw, 18px) !important;
+  }
+}
+
+/* ============================================================
+   SCROLL-REVEAL POLYFILL VIA CSS ONLY (fallback)
+   Sections fade in once the IS-LIVE / is-portrait class is applied.
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* Chrono section: entire section fades in when it goes live */
+  .chrono .chrono__title,
+  .chrono .chrono__hint,
+  .chrono .chrono__note--br {
+    /* the base CSS already transitions these via is-live;
+       just increase the mobile entrance duration for drama */
+    transition-duration: 1.4s !important;
+  }
+
+  /* Contact panel: fade-up on scroll (class applied by mobile JS hook) */
+  .contact-panel__intro.mob-reveal,
+  .contact-info.mob-reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 0.82s cubic-bezier(.16, 1, .3, 1),
+      transform 0.82s cubic-bezier(.16, 1, .3, 1);
+  }
+  .contact-panel__intro.mob-reveal.mob-visible,
+  .contact-info.mob-reveal.mob-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .contact-info.mob-reveal.mob-visible {
+    transition-delay: 0.18s;
+  }
+}
+
+/* ============================================================
+   REDUCED MOTION — respect the preference, kill all new anims
+   ============================================================ */
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  .mob-reveal,
+  .mob-reveal.mob-visible,
+  .contact-panel__intro.mob-reveal,
+  .contact-info.mob-reveal,
+  .contact-panel__intro.mob-reveal.mob-visible,
+  .contact-info.mob-reveal.mob-visible {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    animation: none !important;
+  }
+  .chrono.is-portrait .yr.is-active .yr__frame,
+  .chrono.is-portrait .yr.is-active .yr__go,
+  .contact-info,
+  .contact-panel__eyebrow::before {
+    animation: none !important;
+  }
+}
